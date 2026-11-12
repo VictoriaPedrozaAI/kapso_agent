@@ -1,0 +1,8 @@
+definition: definition.json
+name: Kordinia Customer Support
+slug: kordinia-support
+status: active
+triggers:
+  - active: true
+    phoneNumberId: "${ENV:WHATSAPP_PHONE_NUMBER_ID}"
+    triggerType: inbound_message

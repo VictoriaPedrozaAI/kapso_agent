@@ -1,0 +1,52 @@
+{
+  "version": "7.3",
+  "screens": [
+    {
+      "id": "LEAD_CAPTURE",
+      "terminal": true,
+      "title": "Datos de contacto",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextBody",
+            "text": "Completa tus datos para agendar tu llamada gratuita con Kordinia."
+          },
+          {
+            "type": "TextInput",
+            "name": "nombre",
+            "label": "Tu nombre",
+            "input-type": "text",
+            "required": true
+          },
+          {
+            "type": "TextInput",
+            "name": "empresa",
+            "label": "Nombre de tu empresa",
+            "input-type": "text",
+            "required": true
+          },
+          {
+            "type": "TextInput",
+            "name": "correo",
+            "label": "Correo electrónico",
+            "input-type": "email",
+            "required": true
+          },
+          {
+            "type": "Footer",
+            "label": "Continuar",
+            "on-click-action": {
+              "name": "complete",
+              "payload": {
+                "nombre": "${form.nombre}",
+                "empresa": "${form.empresa}",
+                "correo": "${form.correo}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

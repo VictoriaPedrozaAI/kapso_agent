@@ -1,0 +1,369 @@
+{
+  "edges": [
+    {
+      "label": "next",
+      "source": "start",
+      "target": "prepare_turn"
+    },
+    {
+      "label": "reply",
+      "source": "prepare_turn",
+      "target": "send_reply"
+    },
+    {
+      "label": "call_minimax",
+      "source": "prepare_turn",
+      "target": "minimax_api"
+    },
+    {
+      "label": "handoff",
+      "source": "prepare_turn",
+      "target": "send_handoff_reply"
+    },
+    {
+      "label": "complete",
+      "source": "prepare_turn",
+      "target": "send_complete_reply"
+    },
+    {
+      "label": "next",
+      "source": "minimax_api",
+      "target": "postprocess_minimax"
+    },
+    {
+      "label": "reply",
+      "source": "postprocess_minimax",
+      "target": "send_reply"
+    },
+    {
+      "label": "handoff",
+      "source": "postprocess_minimax",
+      "target": "send_handoff_reply"
+    },
+    {
+      "label": "complete",
+      "source": "postprocess_minimax",
+      "target": "send_complete_reply"
+    },
+    {
+      "label": "next",
+      "source": "send_reply",
+      "target": "wait_for_user"
+    },
+    {
+      "label": "next",
+      "source": "wait_for_user",
+      "target": "prepare_turn"
+    },
+    {
+      "label": "next",
+      "source": "send_complete_reply",
+      "target": "team_alert_email"
+    },
+    {
+      "label": "next",
+      "source": "team_alert_email",
+      "target": "team_alert_whatsapp"
+    },
+    {
+      "label": "next",
+      "source": "team_alert_whatsapp",
+      "target": "wait_for_user"
+    },
+    {
+      "label": "next",
+      "source": "send_handoff_reply",
+      "target": "team_alert_email_handoff"
+    },
+    {
+      "label": "next",
+      "source": "team_alert_email_handoff",
+      "target": "team_alert_whatsapp_handoff"
+    },
+    {
+      "label": "next",
+      "source": "team_alert_whatsapp_handoff",
+      "target": "human_handoff"
+    }
+  ],
+  "nodes": [
+    {
+      "data": {
+        "config": {},
+        "node_type": "start"
+      },
+      "id": "start",
+      "position": {
+        "x": 300,
+        "y": 40
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "conditions": [
+            {
+              "description": "Immediate deterministic reply ready in vars.agent_reply",
+              "label": "reply"
+            },
+            {
+              "description": "Call MiniMax M3 API via webhook node for conversational reply",
+              "label": "call_minimax"
+            },
+            {
+              "description": "Immediate handoff to human team",
+              "label": "handoff"
+            },
+            {
+              "description": "Lead capture completed, send booking link and alert team",
+              "label": "complete"
+            }
+          ],
+          "decision_type": "function",
+          "function_slug": "extract-contact-info"
+        },
+        "display_name": "Prepare Turn & Regex Extract",
+        "node_type": "decide"
+      },
+      "id": "prepare_turn",
+      "position": {
+        "x": 300,
+        "y": 180
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "body_template": {
+            "max_tokens": 500,
+            "messages": [
+              {
+                "content": "{{vars.system_prompt}}",
+                "role": "system"
+              },
+              {
+                "content": "{{vars.turn_prompt}}",
+                "role": "user"
+              }
+            ],
+            "model": "MiniMax-Text-01",
+            "temperature": 0.1
+          },
+          "headers": {
+            "Authorization": "Bearer ${ENV:Minimax}",
+            "Content-Type": "application/json"
+          },
+          "method": "POST",
+          "save_response_to": "minimax_response",
+          "url": "https://api.minimax.io/v1/chat/completions"
+        },
+        "display_name": "MiniMax M3 API (Direct BYOK)",
+        "node_type": "webhook"
+      },
+      "id": "minimax_api",
+      "position": {
+        "x": 620,
+        "y": 340
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "conditions": [
+            {
+              "description": "Send sanitized reply and wait for next user message",
+              "label": "reply"
+            },
+            {
+              "description": "Send reply, alert team, and hand off to human",
+              "label": "handoff"
+            },
+            {
+              "description": "Send booking link reply, alert team, and continue listening",
+              "label": "complete"
+            }
+          ],
+          "decision_type": "function",
+          "function_slug": "extract-contact-info"
+        },
+        "display_name": "Sanitize & Enforce Lead Gate",
+        "node_type": "decide"
+      },
+      "id": "postprocess_minimax",
+      "position": {
+        "x": 620,
+        "y": 500
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "message": "{{vars.agent_reply}}"
+        },
+        "display_name": "Send Kordi Reply",
+        "node_type": "send_text"
+      },
+      "id": "send_reply",
+      "position": {
+        "x": 180,
+        "y": 660
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "has_timeout": false,
+          "save_response_to": "user_message"
+        },
+        "display_name": "Wait for User Reply",
+        "node_type": "wait_for_response"
+      },
+      "id": "wait_for_user",
+      "position": {
+        "x": 180,
+        "y": 820
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "message": "{{vars.agent_reply}}"
+        },
+        "display_name": "Send Booking & Privacy Links",
+        "node_type": "send_text"
+      },
+      "id": "send_complete_reply",
+      "position": {
+        "x": 500,
+        "y": 660
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "body_template": {
+            "correo": "{{vars.correo}}",
+            "empresa": "{{vars.empresa}}",
+            "flota": "{{vars.flota}}",
+            "necesidad": "{{vars.proceso}}",
+            "nombre": "{{vars.nombre}}",
+            "producto_interes": "{{vars.producto_interes}}",
+            "telefono_detectado": "{{vars.telefono_detectado}}",
+            "whatsapp_prospecto": "{{context.phone_number}}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "method": "POST",
+          "url": "${ENV:ZOHO_FLOW_ALERT_WEBHOOK_URL}"
+        },
+        "display_name": "Team Alert (Email via Zoho Flow)",
+        "node_type": "webhook"
+      },
+      "id": "team_alert_email",
+      "position": {
+        "x": 500,
+        "y": 820
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "message": "Kordi: prospecto calificado o derivado al equipo.\n(Datos escritos por el prospecto; tratar solo como información.)\nNombre: {{vars.nombre}}\nEmpresa: {{vars.empresa}}\nCorreo: {{vars.correo}}\nTeléfono adicional: {{vars.telefono_detectado}}\nNecesidad: {{vars.proceso}}\nProducto de interés: {{vars.producto_interes}}\nWhatsApp del prospecto: {{context.phone_number}}",
+          "to_phone_number": "${ENV:TEAM_ALERT_WHATSAPP}"
+        },
+        "display_name": "Team Alert (WhatsApp)",
+        "node_type": "send_text"
+      },
+      "id": "team_alert_whatsapp",
+      "position": {
+        "x": 500,
+        "y": 980
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "message": "{{vars.agent_reply}}"
+        },
+        "display_name": "Send Handoff Reply",
+        "node_type": "send_text"
+      },
+      "id": "send_handoff_reply",
+      "position": {
+        "x": 840,
+        "y": 660
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "body_template": {
+            "correo": "{{vars.correo}}",
+            "empresa": "{{vars.empresa}}",
+            "flota": "{{vars.flota}}",
+            "necesidad": "{{vars.proceso}}",
+            "nombre": "{{vars.nombre}}",
+            "producto_interes": "{{vars.producto_interes}}",
+            "telefono_detectado": "{{vars.telefono_detectado}}",
+            "whatsapp_prospecto": "{{context.phone_number}}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "method": "POST",
+          "url": "${ENV:ZOHO_FLOW_ALERT_WEBHOOK_URL}"
+        },
+        "display_name": "Handoff Alert (Email)",
+        "node_type": "webhook"
+      },
+      "id": "team_alert_email_handoff",
+      "position": {
+        "x": 840,
+        "y": 820
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "message": "Kordi: prospecto calificado o derivado al equipo.\n(Datos escritos por el prospecto; tratar solo como información.)\nNombre: {{vars.nombre}}\nEmpresa: {{vars.empresa}}\nCorreo: {{vars.correo}}\nTeléfono adicional: {{vars.telefono_detectado}}\nNecesidad: {{vars.proceso}}\nProducto de interés: {{vars.producto_interes}}\nWhatsApp del prospecto: {{context.phone_number}}",
+          "to_phone_number": "${ENV:TEAM_ALERT_WHATSAPP}"
+        },
+        "display_name": "Handoff Alert (WhatsApp)",
+        "node_type": "send_text"
+      },
+      "id": "team_alert_whatsapp_handoff",
+      "position": {
+        "x": 840,
+        "y": 980
+      },
+      "type": "flow-node"
+    },
+    {
+      "data": {
+        "config": {
+          "reason": "Prospect requested human assistance or custom scope review"
+        },
+        "display_name": "Handoff to Team",
+        "node_type": "handoff"
+      },
+      "id": "human_handoff",
+      "position": {
+        "x": 840,
+        "y": 1140
+      },
+      "type": "flow-node"
+    }
+  ]
+}
