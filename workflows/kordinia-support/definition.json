@@ -217,8 +217,9 @@
     {
       "data": {
         "config": {
-          "has_timeout": false,
-          "save_response_to": "user_message"
+          "has_timeout": true,
+          "save_response_to": "user_message",
+          "timeout_seconds": 86400
         },
         "display_name": "Wait for User Reply",
         "node_type": "wait_for_response"
@@ -251,7 +252,6 @@
           "body_template": {
             "correo": "{{vars.correo}}",
             "empresa": "{{vars.empresa}}",
-            "flota": "{{vars.flota}}",
             "necesidad": "{{vars.proceso}}",
             "nombre": "{{vars.nombre}}",
             "producto_interes": "{{vars.producto_interes}}",
@@ -311,7 +311,6 @@
           "body_template": {
             "correo": "{{vars.correo}}",
             "empresa": "{{vars.empresa}}",
-            "flota": "{{vars.flota}}",
             "necesidad": "{{vars.proceso}}",
             "nombre": "{{vars.nombre}}",
             "producto_interes": "{{vars.producto_interes}}",

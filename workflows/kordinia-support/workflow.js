@@ -26,7 +26,6 @@ const TEAM_ALERT_BODY = {
   telefono_detectado: "{{vars.telefono_detectado}}",
   necesidad: "{{vars.proceso}}",
   producto_interes: "{{vars.producto_interes}}",
-  flota: "{{vars.flota}}",
   whatsapp_prospecto: "{{context.phone_number}}",
 };
 
@@ -155,6 +154,7 @@ workflow.addNode(
   {
     type: "wait_for_response",
     saveResponseTo: "user_message",
+    timeoutSeconds: 86400,
   },
   { displayName: "Wait for User Reply", position: { x: 180, y: 820 } },
 );
